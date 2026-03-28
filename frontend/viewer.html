@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SENTINEL | Diagnostic Viewer</title>
+    <!-- FAVICON -->
+    <link rel="icon" type="image/png" href="assets/logo.png" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+      #vanta-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        z-index: -1;
+      }
+
+      body.viewer-body {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background-color: transparent;
+      }
+
+      .viewer-layout {
+        display: flex;
+        width: 90%;
+        max-width: 1400px;
+        height: 85vh;
+        background: rgba(18, 18, 23, 0.75);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(193, 88, 220, 0.3);
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        overflow: hidden;
+      }
+
+      .viewer-sidebar {
+        width: 350px;
+        background: rgba(0, 0, 0, 0.4);
+        border-right: 1px solid rgba(193, 88, 220, 0.2);
+        padding: 30px 24px;
+        display: flex;
+        flex-direction: column;
+        color: #f4f4f5;
+      }
+
+      .viewer-sidebar h2 {
+        margin-top: 0;
+        color: #c158dc;
+        letter-spacing: 2px;
+        font-size: 1.2rem;
+        border-bottom: 1px solid rgba(193, 88, 220, 0.3);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+
+      .viewport {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        position: relative;
+      }
+
+      #active-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .uniform-btn {
+        background-color: #6a1b9a !important;
+        border: 1px solid #c86dd7 !important;
+        color: white;
+        padding: 14px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+        width: 100%;
+      }
+
+      .uniform-btn:hover {
+        background-color: #c158dc !important;
+        border-color: #c86dd7 !important;
+        box-shadow: 0 0 15px rgba(200, 109, 215, 0.4);
+        color: #fff;
+      }
+
+      #run-ai-btn {
+        margin-top: auto;
+      }
+
+      #loading-overlay {
+        position: absolute;
+        color: #c158dc;
+        font-weight: bold;
+        letter-spacing: 2px;
+        z-index: 10;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #6a1b9a;
+      }
+    </style>
+  </head>
+  <body class="viewer-body">
+    <div id="vanta-bg"></div>
+    <div class="viewer-layout">
+      <aside class="viewer-sidebar">
+        <h2 style="display: flex; align-items: center">
+          <img
+            src="assets/logo.png"
+            alt="Logo"
+            style="height: 24px; margin-right: 12px"
+          />
+          STUDY INFO
+        </h2>
+
+        <div id="study-meta"></div>
+        <div id="study-data" style="display: none">
+          <span id="meta-patient-id"></span>
+          <span id="meta-study-uid"></span>
+          <span id="meta-urgency"></span>
+        </div>
+
+        <div
+          id="gemini-results"
+          style="
+            margin: 15px 0;
+            padding: 12px;
+            background: rgba(106, 27, 154, 0.15); /* DEEP PURPLE Tint */
+            border-left: 4px solid #c86dd7; /* PINK */
+            color: #f8fafc;
+            font-size: 0.9rem;
+            display: none;
+            border-radius: 0 4px 4px 0;
+            line-height: 1.5;
+            overflow-y: auto;
+            max-height: 250px;
+          "
+        ></div>
+
+        <button id="run-ai-btn" class="uniform-btn">REQUEST AI ANALYSIS</button>
+
+        <button id="download-btn" class="uniform-btn">
+          GENERATE AI REPORT
+        </button>
+
+        <button onclick="window.close()" class="uniform-btn">
+          CLOSE STATION
+        </button>
+      </aside>
+
+      <main class="viewport">
+        <div id="loading-overlay" style="display: none">
+          DECOMPRESSING DICOM...
+        </div>
+        <img id="active-image" src="" alt="Diagnostic View" />
+      </main>
+    </div>
+
+    <script src="viewer-logic.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.cells.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        VANTA.CELLS({
+          el: "#vanta-bg",
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.0,
+          minWidth: 200.0,
+          scale: 2,
+          color1: 0x6a1b9a,
+          color2: 0xc158dc,
+        });
+      });
+    </script>
+
+    <div id="report-template" style="display: none; background: #ffffff">
+      <div
+        style="
+          width: 750px;
+          margin: 0 auto;
+          padding: 30px;
+          background: #ffffff;
+          color: #000000;
+          font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;
+          box-sizing: border-box;
+          text-align: center;
+          display: block;
+        "
+      >
+        <div
+          style="
+            width: 100%;
+            margin: 0 auto 20px auto;
+            border-bottom: 2px solid #000000;
+            padding-bottom: 15px;
+            text-align: center;
+          "
+        >
+          <img
+            src="assets/logo.png"
+            style="height: 50px; margin: 0 auto 10px auto; display: block"
+            alt="Sentinel Logo"
+          />
+          <h2
+            style="
+              margin: 0;
+              font-size: 24px;
+              color: #000000;
+              letter-spacing: 2px;
+              text-transform: uppercase;
+              text-align: center;
+            "
+          >
+            Diagnostic Triage Report
+          </h2>
+          <p
+            style="
+              margin: 5px 0 10px;
+              color: #000000;
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              text-align: center;
+            "
+          >
+            Automated Sentinel Engine &bull; Mini-PACS
+          </p>
+          <div
+            id="pdf-date"
+            style="
+              color: #000000;
+              font-size: 12px;
+              font-weight: bold;
+              text-align: center;
+            "
+          ></div>
+        </div>
+
+        <table
+          style="
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto 20px auto;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+            text-align: center;
+          "
+        >
+          <tr>
+            <td
+              style="
+                width: 33%;
+                padding: 12px;
+                border: 1px solid #000000;
+                text-align: center;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  color: #000000;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  margin-bottom: 4px;
+                  font-weight: bold;
+                "
+              >
+                Patient ID
+              </div>
+              <div
+                id="pdf-pid"
+                style="font-weight: bold; font-size: 16px; color: #000000"
+              ></div>
+            </td>
+            <td
+              style="
+                width: 33%;
+                padding: 12px;
+                border: 1px solid #000000;
+                text-align: center;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  color: #000000;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  margin-bottom: 4px;
+                  font-weight: bold;
+                "
+              >
+                AI Priority
+              </div>
+              <div
+                id="pdf-urgency"
+                style="font-weight: bold; font-size: 16px; color: #000000"
+              ></div>
+            </td>
+            <td
+              style="
+                width: 33%;
+                padding: 12px;
+                border: 1px solid #000000;
+                text-align: center;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  color: #000000;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  margin-bottom: 4px;
+                  font-weight: bold;
+                "
+              >
+                Engine Flags
+              </div>
+              <div
+                id="pdf-flags"
+                style="font-weight: bold; font-size: 14px; color: #000000"
+              ></div>
+            </td>
+          </tr>
+        </table>
+
+        <div style="text-align: center; margin-bottom: 20px; width: 100%">
+          <div
+            style="
+              display: inline-block;
+              padding: 10px 20px;
+              border: 1px dashed #000000;
+              margin: 0 auto;
+            "
+          >
+            <span
+              style="
+                font-size: 11px;
+                color: #000000;
+                text-transform: uppercase;
+                font-weight: bold;
+              "
+              >Study UID:</span
+            >
+            <span
+              id="pdf-uid"
+              style="
+                font-family: monospace;
+                font-size: 12px;
+                color: #000000;
+                margin-left: 5px;
+                word-break: break-all;
+              "
+            ></span>
+          </div>
+        </div>
+
+        <div
+          style="
+            margin: 0 auto 20px auto;
+            padding: 10px;
+            border: 2px solid #000000;
+            width: 80%;
+            max-width: 600px;
+            box-sizing: border-box;
+            text-align: center;
+          "
+        >
+          <img
+            id="pdf-image"
+            src=""
+            style="
+              max-width: 100%;
+              max-height: 280px;
+              display: block;
+              margin: 0 auto;
+            "
+          />
+        </div>
+
+        <div style="margin: 0 auto; width: 90%; text-align: center">
+          <h3
+            style="
+              margin: 0 auto 10px auto;
+              color: #000000;
+              font-size: 16px;
+              text-transform: uppercase;
+              border-bottom: 1px solid #000000;
+              display: inline-block;
+              padding-bottom: 5px;
+            "
+          >
+            AI Diagnostic Summary
+          </h3>
+          <div
+            style="
+              padding: 15px;
+              border: 1px solid #000000;
+              margin: 0 auto;
+              text-align: left;
+            "
+          >
+            <p
+              id="pdf-ai-summary"
+              style="
+                margin: 0;
+                color: #000000;
+                line-height: 1.5;
+                font-size: 14px;
+                text-align: left;
+              "
+            ></p>
+          </div>
+        </div>
+
+        <div
+          style="
+            margin: 30px auto 0 auto;
+            padding-top: 15px;
+            border-top: 2px solid #000000;
+            width: 100%;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #000000;
+            text-align: center;
+          "
+        >
+          Generated by Sentinel Engine &bull; Confidential Medical Record
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

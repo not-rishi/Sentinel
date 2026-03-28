@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SENTINEL | Staff Login</title>
+    <link rel="icon" type="image/png" href="assets/logo.png" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: var(--bg);
+      }
+      #vanta-bg {
+        position: fixed; 
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh; 
+        z-index: -1;
+      }
+      .login-box {
+        background: rgba(0, 0, 0, 0.7);
+        padding: 40px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        width: 350px;
+        text-align: center;
+      }
+      .login-box h2 {
+        color: #fff;
+        margin-bottom: 24px;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+      }
+      .login-box input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: #fff;
+        border-radius: 6px;
+        box-sizing: border-box;
+      }
+      .login-box button {
+        width: 100%;
+        padding: 12px;
+        background: #c158dc;
+        color: #000;
+        font-weight: bold;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .login-box button:hover {
+        background: #c86dd7;
+        box-shadow: 0 0 5px rgba(193, 88, 220, 0.6);
+        transform: scale(1.01);
+        transition: all 0.3s ease;
+      }
+    </style>
+  </head>
+
+  <div id="vanta-bg"></div>
+  <body>
+    <div class="login-box">
+      <div class="header-wrapper">
+        <img src="assets/logo.png"  height="100px">
+        <h2>SENTINEL LOGIN</h2>
+      </div>
+      <input
+        type="text"
+        id="access-id"
+        placeholder="Enter Access ID (e.g. R-001)"
+      />
+      <button onclick="attemptLogin()">SECURE LOGIN</button>
+      <p
+        id="error-msg"
+        style="color: var(--danger); margin-top: 15px; display: none"
+      >
+        Invalid ID
+      </p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.topology.min.js"></script>
+    <script>
+      VANTA.TOPOLOGY({
+        el: "#vanta-bg",
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200,
+        minWidth: 200,
+        scale: 1,
+        scaleMobile: 1,
+        color: 0xc158dc,
+        backgroundColor: 0x0,
+      });
+    </script>
+
+    <script>
+      function attemptLogin() {
+        const id = document.getElementById("access-id").value.trim();
+        fetch("http://localhost:8000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ access_id: id }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.status === "success") {
+              sessionStorage.setItem("access_id", id);
+              sessionStorage.setItem("user_name", data.user);
+              window.location.href = "index.html";
+            } else {
+              document.getElementById("error-msg").style.display = "block";
+            }
+          })
+          .catch(
+            () =>
+              (document.getElementById("error-msg").style.display = "block"),
+          );
+      }
+
+      function handleLogout() {
+        const userAccessId = sessionStorage.getItem("access_id");
+        fetch("http://localhost:8000/api/auth/logout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ access_id: userAccessId }),
+        }).then(() => {
+          sessionStorage.clear();
+          window.location.href = "login.html";
+        });
+      }
+    </script>
+  </body>
+</html>
