@@ -62,7 +62,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-genai.configure(api_key="AIzaSyAeNMjorCy-EwhKiI7xJ97V_WrOJrcEJbY")
+genai.configure(api_key="Gemini API Key")
 
 @app.get("/api/ai-analyze/{sop_uid}")
 async def analyze_dicom_with_gemini(sop_uid: str, access_id: str = None):
