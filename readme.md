@@ -19,6 +19,20 @@
 Sentinel is an automated medical imaging triage framework that simulates a modern PACS (Picture Archiving and Communication System) workflow. It accepts DICOM studies, anonymizes patient information, prioritizes cases based on metadata and AI-assisted image analysis, and delivers a real-time dashboard for radiological triage.
 </p>
 
+<table align="center">
+  <tr>
+    <td align="center" width="550">
+
+<img src="frontend/assets/spectre-logo.png" width="300" alt="Spectre 2026">
+
+**✧ Spectre 2026 Hackathon — 3rd Position**
+
+<sub>Awarded for <b>SENTINEL</b>, an AI-powered Medical Imaging Triage Framework.</sub>
+
+  </td>
+  </tr>
+</table>
+
 ---
 
 # ▸ Repository Structure
