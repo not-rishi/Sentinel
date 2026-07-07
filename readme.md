@@ -1,68 +1,417 @@
-SENTINEL | Automated Medical Imaging Triage Framework
-SENTINEL is a simulated medical imaging triage system designed to automate the prioritization of radiological scans using both metadata analysis and Generative AI. It mimics a real-world PACS (Picture Archiving and Communication System) environment by accepting DICOM files, anonymizing patient data, and flagging critical cases for immediate review.
+<p align="center">
+  <img src="frontend/assets/logo.png" alt="Sentinel Logo" width="200"/>
+</p>
 
-🚀 System Architecture
-The project is divided into three core components:
+<h1 align="center">SENTINEL</h1>
 
-1. Backend (FastAPI & DICOM Server)
-FastAPI Web Server: Handles authentication, image rendering, audit logging, and WebSocket communication for real-time dashboard updates.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10+-blue" />
+  <img src="https://img.shields.io/badge/FastAPI-Backend-009688" />
+  <img src="https://img.shields.io/badge/DICOM-PACS%20Simulation-success" />
+  <img src="https://img.shields.io/badge/AI-Gemini-purple" />
+  <img src="https://img.shields.io/badge/WebSockets-Real--Time-orange" />
+  <img src="https://img.shields.io/badge/Medical-Imaging-critical" />
+  <img src="https://img.shields.io/badge/Privacy-DICOM%20Anonymization-blueviolet" />
+  <img src="https://img.shields.io/badge/Status-Actively%20Developed-success" />
+</p>
 
-DICOM SCP (Service Class Provider): A background server running on port 11112 that accepts incoming C-STORE requests using pynetdicom.
+<p align="center">
+Sentinel is an automated medical imaging triage framework that simulates a modern PACS (Picture Archiving and Communication System) workflow. It accepts DICOM studies, anonymizes patient information, prioritizes cases based on metadata and AI-assisted image analysis, and delivers a real-time dashboard for radiological triage.
+</p>
 
-Triage Engine: A rule-based processing unit that anonymizes DICOM datasets and assigns urgency levels (Routine, Urgent, Critical) based on metadata keywords (e.g., "TRAUMA", "STROKE") and pixel intensity anomalies.
+---
 
-AI Integration: Utilizes the Gemini API to analyze DICOM pixel data for visual anomalies and tumor/foreign object detection.
+# ▸ Repository Structure
 
-2. Frontend (Modern Web Interface)
-Triage Control Dashboard: A real-time interface built with HTML/CSS and Vanilla JS that displays the current study queue and system metrics.
+```text
+SENTINEL/
+│
+├── backend/
+│   ├── dicom_to_gemini.py
+│   ├── main.py
+│   ├── requirements.txt
+│   └── triage_engine.py
+│
+├── frontend/
+│   ├── assets/
+│   │   └── logo.png
+│   ├── app.js
+│   ├── index.html
+│   ├── login.html
+│   ├── style.css
+│   ├── viewer-logic.js
+│   └── viewer.html
+│
+├── test_client/
+│   ├── sample_data/
+│   │   ├── 01_routine.dcm
+│   │   ├── 02_urgent_meta.dcm
+│   │   ├── 03_urgent_pixel.dcm
+│   │   ├── 04_critical.dcm
+│   │   ├── angio.dcm
+│   │   ├── brain.dcm
+│   │   ├── head.dcm
+│   │   └── smtg.dcm
+│   ├── generate_dummies.py
+│   ├── live_feed.py
+│   ├── sender.py
+│   └── test_dicom_server.py
+│
+└── README.md
+```
 
-Real-time Updates: Uses WebSockets to stream metrics (uptime, deliverability) and new study arrivals directly to the UI.
+---
 
-DICOM Viewer: A dedicated viewer for authorized personnel to render and inspect radiological images as PNGs.
+# ▸ System Architecture
 
-3. Simulation Tools
-Live Hospital Feed Simulator: A Python script (live_feed.py) that generates synthetic DICOM data with randomized metadata and pixel anomalies, then streams them to the Sentinel server at set intervals.
+Sentinel is composed of three tightly integrated components that emulate a real-world hospital imaging workflow.
 
-🛠 Tech Stack
-Backend: Python, FastAPI, Pydicom, Pynetdicom, NumPy, Pillow.
+---
 
-AI: Google Generative AI (Gemini 1.5 Flash).
+## ✦ Backend (FastAPI + DICOM Server)
 
-Frontend: HTML5, CSS3, JavaScript, WebSockets, Three.js/Vanta.js (for aesthetics).
+The backend serves as the central processing engine responsible for receiving, analyzing and managing radiological studies.
 
-📂 Core Files
-backend/main.py: Main entry point for the FastAPI server and DICOM SCP.
+### Features
 
-backend/triage_engine.py: Logic for anonymization and rule-based triage.
+- FastAPI REST server
+- Built-in DICOM SCP using **pynetdicom**
+- Accepts incoming C-STORE requests
+- Automatic DICOM anonymization
+- Metadata-driven triage engine
+- AI-assisted image analysis using Gemini
+- Audit logging
+- Real-time WebSocket communication
 
-backend/dicom_to_gemini.py: Pipeline for converting DICOM to image bytes and querying Gemini.
+### Responsibilities
 
-frontend/index.html: The main dashboard layout.
+- Authentication
+- DICOM ingestion
+- Patient data anonymization
+- Urgency classification
+- AI inference
+- Dashboard updates
+- Viewer authorization
 
-test_client/live_feed.py: Simulator for generating and sending DICOM traffic.
+---
 
-🔒 Security & Privacy
-Anonymization: Every incoming DICOM file is stripped of identifying information (Name, ID, BirthDate) and assigned a unique anonymous UID before storage.
+## ✦ Frontend Dashboard
 
-Audit Logging: Every sensitive action—including logins, logouts, and image rendering—is logged to a secure terminal audit trail.
+A lightweight web dashboard designed for radiologists and authorized personnel.
 
-Access Control: The system uses a predefined set of Valid Access IDs (e.g., R-001 for Dr. Rishi) to authorize API requests and image access.
+### Features
 
-⚙️ Setup & Installation
-Install Dependencies:
+- Live triage queue
+- Real-time study arrival updates
+- Dashboard metrics
+- DICOM image viewer
+- Authentication portal
+- Responsive interface
 
-Bash
+### Live Metrics
+
+- System uptime
+- Total studies received
+- Delivery status
+- Current processing queue
+- Critical case count
+
+---
+
+## ✦ Simulation Tools
+
+Sentinel includes utilities that simulate a live hospital imaging environment for testing and demonstrations.
+
+### Features
+
+- Synthetic DICOM generation
+- Randomized metadata
+- Pixel anomaly injection
+- Continuous streaming
+- PACS traffic simulation
+
+---
+
+# ▸ Automated Triage Pipeline
+
+Every incoming study passes through the following workflow:
+
+```
+Incoming DICOM Study
+        │
+        ▼
+ DICOM SCP Receiver
+        │
+        ▼
+ Patient Data Anonymization
+        │
+        ▼
+ Metadata Analysis
+        │
+        ▼
+ Pixel Intensity Analysis
+        │
+        ▼
+ Gemini AI Image Review
+        │
+        ▼
+ Priority Assignment
+        │
+        ▼
+ Dashboard Update
+        │
+        ▼
+ Authorized Viewer Access
+```
+
+---
+
+# ▸ Triage Levels
+
+Sentinel classifies studies into three urgency categories.
+
+| Level | Description |
+|--------|-------------|
+| 🟢 Routine | No abnormal findings detected. |
+| 🟠 Urgent | Metadata or image anomalies require prompt review. |
+| 🔴 Critical | High-priority cases such as trauma, stroke, tumors or significant anomalies requiring immediate attention. |
+
+---
+
+# ▸ AI Integration
+
+Sentinel utilizes Google's **Gemini 1.5 Flash** model to assist with medical image analysis.
+
+The AI pipeline performs:
+
+- DICOM to image conversion
+- Pixel interpretation
+- Tumor indication detection
+- Foreign object detection
+- Visual anomaly analysis
+- Additional confidence during triage
+
+AI decisions complement the rule-based engine and are intended for simulation purposes only.
+
+---
+
+# ▸ Security & Privacy
+
+Sentinel incorporates several security mechanisms to mimic real clinical environments.
+
+### DICOM Anonymization
+
+Every received study automatically removes identifying patient information including:
+
+- Patient Name
+- Patient ID
+- Birth Date
+- Other identifying metadata
+
+Each study receives a unique anonymous identifier before storage.
+
+### Audit Logging
+
+The backend records important system events including:
+
+- User login
+- User logout
+- Image rendering
+- Viewer access
+- Study processing
+- AI analysis requests
+
+### Access Control
+
+Only predefined access IDs are permitted to view medical studies.
+
+Example:
+
+```
+R-001 → Dr. Rishi
+```
+
+---
+
+# ▸ Core Files
+
+### Backend
+
+```
+backend/main.py
+```
+
+FastAPI server, authentication, WebSockets and DICOM SCP.
+
+```
+backend/triage_engine.py
+```
+
+Metadata analysis, anonymization and urgency assignment.
+
+```
+backend/dicom_to_gemini.py
+```
+
+Converts DICOM images into Gemini-compatible inputs and processes AI responses.
+
+---
+
+### Frontend
+
+```
+frontend/index.html
+```
+
+Main dashboard.
+
+```
+frontend/login.html
+```
+
+Secure login portal.
+
+```
+frontend/viewer.html
+```
+
+Authorized DICOM image viewer.
+
+---
+
+### Simulation
+
+```
+test_client/live_feed.py
+```
+
+Generates continuous synthetic hospital imaging traffic.
+
+---
+
+# ▸ Tech Stack
+
+```text
+Backend
+- Python 3.10+
+- FastAPI
+- Pydicom
+- Pynetdicom
+- NumPy
+- Pillow
+
+Artificial Intelligence
+- Google Gemini 1.5 Flash
+
+Frontend
+- HTML5
+- CSS3
+- JavaScript
+- WebSockets
+- Three.js
+- Vanta.js
+
+Medical Imaging
+- DICOM
+- PACS Simulation
+```
+
+---
+
+# ▸ Setup
+
+## Prerequisites
+
+- Python 3.10+
+- Google Gemini API Key
+
+---
+
+## Installation
+
+Clone the repository
+
+```bash
+git clone https://github.com/yourusername/sentinel.git
+cd sentinel
+```
+
+Install dependencies
+
+```bash
 pip install -r backend/requirements.txt
-Configure API Key:
-Update the api_key in backend/main.py and backend/dicom_to_gemini.py with your Gemini API Key.
+```
 
-Run the Backend:
+Configure your Gemini API Key inside:
 
-Bash
-uvicorn main:app --reload
-Start the Simulator:
+```
+backend/main.py
+backend/dicom_to_gemini.py
+```
 
-Bash
+Run the backend
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+Start the hospital simulator
+
+```bash
 python test_client/live_feed.py
-Access the Dashboard:
-Open frontend/login.html in your browser and log in with a valid ID (e.g., R-001).
+```
+
+Open the dashboard
+
+```
+frontend/login.html
+```
+
+Login using a valid access ID.
+
+Example:
+
+```
+R-001
+```
+
+---
+
+# ▸ Specifications
+
+| Component | Specification |
+|------------|---------------|
+| Backend Framework | FastAPI |
+| DICOM Server | pynetdicom SCP |
+| Image Processing | Pydicom + Pillow |
+| AI Model | Gemini 1.5 Flash |
+| Communication | REST + WebSockets |
+| Viewer | Browser-based PNG Renderer |
+| Authentication | Access ID Validation |
+| Privacy | Automatic DICOM Anonymization |
+| Logging | Audit Trail |
+| Simulation | Live DICOM Feed Generator |
+
+---
+
+# ▸ Future Improvements
+
+- PostgreSQL integration
+- HL7 support
+- Docker deployment
+- Role-based authentication
+- AI confidence visualization
+- Multi-hospital simulation
+- FHIR interoperability
+- Study history and reporting
+
+---
+
+<h2 align="center">MIT License</h2>
+
+<p align="center">
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files to deal in the Software
+without restriction, including without limitation the rights to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies of the Software.
+</p>
