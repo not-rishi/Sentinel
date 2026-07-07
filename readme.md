@@ -12,7 +12,6 @@
   <img src="https://img.shields.io/badge/WebSockets-Real--Time-orange" />
   <img src="https://img.shields.io/badge/Medical-Imaging-critical" />
   <img src="https://img.shields.io/badge/Privacy-DICOM%20Anonymization-blueviolet" />
-  <img src="https://img.shields.io/badge/Status-Actively%20Developed-success" />
 </p>
 
 <p align="center">
